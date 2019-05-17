@@ -108,6 +108,8 @@ describe('Statistics with default period', function () {
             expect(extractIntStatValue(stats, 'runtime.uptime')).to.greaterThan(0);
             expect(extractIntStatValue(stats, 'runtime.usedMemory')).to.greaterThan(0);
             expect(extractStringStatValue(stats, 'executionService.userExecutorQueueSize')).to.equal('');
+            var principalName = client.getConnectionManager().getLastCredentials().getPrincipal();
+            expect(extractStringStatValue(stats, 'credentials.principal')).to.equal(principalName);
         });
     });
 

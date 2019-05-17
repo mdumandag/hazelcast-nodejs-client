@@ -33,6 +33,8 @@ import {LogLevel} from '..';
 import {ILogger} from '../logging/ILogger';
 import {JsonStringDeserializationPolicy} from './JsonStringDeserializationPolicy';
 import {StringSerializationPolicy} from './StringSerializationPolicy';
+import {SecurityConfig} from './SecurityConfig';
+import {Credentials} from '../security/Credentials';
 
 /**
  * Top level configuration object of Hazelcast client. Other configurations items are properties of this object.
@@ -63,13 +65,14 @@ export class ClientConfig {
     groupConfig: GroupConfig = new GroupConfig();
     networkConfig: ClientNetworkConfig = new ClientNetworkConfig();
     customLogger: ILogger;
-    customCredentials: any = null;
+    customCredentials: Credentials = null;
     listeners: ListenerConfig = new ListenerConfig();
     listenerConfigs: ImportConfig[] = [];
     serializationConfig: SerializationConfig = new SerializationConfig();
     reliableTopicConfigs: { [name: string]: ReliableTopicConfig } = {};
     nearCacheConfigs: { [name: string]: NearCacheConfig } = {};
     flakeIdGeneratorConfigs: { [name: string]: FlakeIdGeneratorConfig } = {};
+    securityConfig: SecurityConfig = new SecurityConfig();
 
     private configPatternMatcher = new ConfigPatternMatcher();
 

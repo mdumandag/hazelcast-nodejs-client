@@ -24,6 +24,8 @@ import {AuthenticationError} from '../HazelcastError';
 import {ILogger} from '../logging/ILogger';
 import ClientMessage = require('../ClientMessage');
 import {BuildInfo} from '../BuildInfo';
+import {ClientConnectionManager} from './ClientConnectionManager';
+import {UsernamePasswordCredentials} from '../security/UsernamePasswordCredentials';
 
 const enum AuthenticationStatus {
     AUTHENTICATED = 0,
@@ -37,10 +39,12 @@ export class ConnectionAuthenticator {
     private client: HazelcastClient;
     private clusterService: ClusterService;
     private logger: ILogger;
+    private connectionManager: ClientConnectionManager;
 
-    constructor(connection: ClientConnection, client: HazelcastClient) {
+    constructor(connection: ClientConnection, connectionManager: ClientConnectionManager) {
         this.connection = connection;
-        this.client = client;
+        this.connectionManager = connectionManager;
+        this.client = connectionManager.getClient();
         this.logger = this.client.getLoggingService().getLogger();
         this.clusterService = this.client.getClusterService();
     }
@@ -83,25 +87,26 @@ export class ConnectionAuthenticator {
     }
 
     createCredentials(asOwner: boolean): ClientMessage {
-        const groupConfig = this.client.getConfig().groupConfig;
         const uuid: string = this.clusterService.uuid;
         const ownerUuid: string = this.clusterService.ownerUuid;
 
         const customCredentials = this.client.getConfig().customCredentials;
+        const credentials = customCredentials || this.client.getCredentialsFactory().newCredentials();
+        this.connectionManager.setLastCredentials(credentials);
 
         let clientMessage: ClientMessage;
 
         const clientVersion = BuildInfo.getClientVersion();
 
-        if (customCredentials != null) {
-            const credentialsPayload = this.client.getSerializationService().toData(customCredentials);
+        if (credentials instanceof UsernamePasswordCredentials) {
+            clientMessage = ClientAuthenticationCodec.encodeRequest(
+                credentials.getUsername(), credentials.getPassword(),
+                uuid, ownerUuid, asOwner, 'NJS', 1, clientVersion);
+        } else {
+            const credentialsPayload = this.client.getSerializationService().toData(credentials);
 
             clientMessage = ClientAuthenticationCustomCodec.encodeRequest(
                 credentialsPayload, uuid, ownerUuid, asOwner, 'NJS', 1, clientVersion);
-        } else {
-            clientMessage = ClientAuthenticationCodec.encodeRequest(
-                groupConfig.name, groupConfig.password, uuid, ownerUuid, asOwner, 'NJS', 1, clientVersion);
-
         }
 
         return clientMessage;

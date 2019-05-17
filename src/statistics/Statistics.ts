@@ -210,7 +210,11 @@ export class Statistics {
         this.addStat(stats, 'clusterConnectionTimestamp', ownerConnection.getStartTime());
         this.addStat(stats, 'clientAddress', ownerConnection.getLocalAddress().toString());
         this.addStat(stats, 'clientName', this.client.getName());
-        this.addStat(stats, 'credentials.principal', this.client.getConfig().groupConfig.name);
+
+        const credentials = this.client.getConnectionManager().getLastCredentials();
+        if (credentials != null) {
+            this.addStat(stats, 'credentials.principal', credentials.getPrincipal());
+        }
 
         for (const gaugeName in this.allGauges) {
             const gaugeValueFunc = this.allGauges[gaugeName];

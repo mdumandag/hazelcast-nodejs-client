@@ -30,6 +30,7 @@ import {AddressProvider} from '../connection/AddressProvider';
 import {ILogger} from '../logging/ILogger';
 import Address = require('../Address');
 import {SSLOptionsFactory} from '../connection/SSLOptionsFactory';
+import {Credentials} from '../security/Credentials';
 
 const EMIT_CONNECTION_CLOSED = 'connectionClosed';
 const EMIT_CONNECTION_OPENED = 'connectionOpened';
@@ -44,6 +45,7 @@ export class ClientConnectionManager extends EventEmitter {
     private pendingConnections: { [address: string]: Promise.Resolver<ClientConnection> } = {};
     private logger: ILogger;
     private readonly addressTranslator: AddressTranslator;
+    private lastCredentials: Credentials = null;
 
     constructor(client: HazelcastClient, addressTranslator: AddressTranslator, addressProviders: AddressProvider[]) {
         super();
@@ -55,6 +57,18 @@ export class ClientConnectionManager extends EventEmitter {
 
     getActiveConnections(): { [address: string]: ClientConnection } {
         return this.establishedConnections;
+    }
+
+    getClient(): HazelcastClient {
+        return this.client;
+    }
+
+    getLastCredentials(): Credentials {
+        return this.lastCredentials;
+    }
+
+    setLastCredentials(credentials: Credentials): void {
+        this.lastCredentials = credentials;
     }
 
     /**
@@ -228,7 +242,7 @@ export class ClientConnectionManager extends EventEmitter {
     }
 
     private authenticate(connection: ClientConnection, ownerConnection: boolean): Promise<void> {
-        const authenticator = new ConnectionAuthenticator(connection, this.client);
+        const authenticator = new ConnectionAuthenticator(connection, this);
         return authenticator.authenticate(ownerConnection);
     }
 }

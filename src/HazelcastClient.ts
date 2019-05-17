@@ -56,6 +56,10 @@ import {HazelcastCloudDiscovery} from './discovery/HazelcastCloudDiscovery';
 import {Statistics} from './statistics/Statistics';
 import {NearCacheManager} from './nearcache/NearCacheManager';
 import {DistributedObjectListener} from './core/DistributedObjectListener';
+import {ICredentialsFactory} from './security/ICredentialsFactory';
+import {DefaultCredentialsFactory} from './security/DefaultCredentialsFactory';
+import {SecurityConfig} from './config/SecurityConfig';
+import {IllegalStateError} from './HazelcastError';
 
 export default class HazelcastClient {
     private static CLIENT_ID = 0;
@@ -77,6 +81,7 @@ export default class HazelcastClient {
     private readonly lockReferenceIdGenerator: LockReferenceIdGenerator;
     private readonly errorFactory: ClientErrorFactory;
     private readonly statistics: Statistics;
+    private readonly credentialsFactory: ICredentialsFactory;
 
     private mapRepairingTask: RepairingTask;
 
@@ -108,6 +113,7 @@ export default class HazelcastClient {
         this.lockReferenceIdGenerator = new LockReferenceIdGenerator();
         this.errorFactory = new ClientErrorFactory();
         this.statistics = new Statistics(this);
+        this.credentialsFactory = this.initCredentialsFactory(config);
     }
 
     /**
@@ -369,6 +375,10 @@ export default class HazelcastClient {
         return this.errorFactory;
     }
 
+    getCredentialsFactory(): ICredentialsFactory {
+        return this.credentialsFactory;
+    }
+
     /**
      * Shuts down this client instance.
      */
@@ -445,5 +455,37 @@ export default class HazelcastClient {
         const networkConfig = this.getConfig().networkConfig;
         const connTimeout = networkConfig.connectionTimeout;
         return connTimeout === 0 ? Number.MAX_VALUE : connTimeout;
+    }
+
+    private initCredentialsFactory(config: ClientConfig): ICredentialsFactory {
+        const securityConfig = config.securityConfig;
+        this.validateSecurityConfig(securityConfig);
+
+        const factory = this.getCredentialsFromFactory(config);
+        if (factory == null) {
+            return new DefaultCredentialsFactory(securityConfig, config.groupConfig);
+        }
+        return factory;
+    }
+
+    private validateSecurityConfig(securityConfig: SecurityConfig): void {
+        const configuredViaCredentials = securityConfig.credentials != null;
+        const configuredViaCredentialsFactory = securityConfig.credentialsFactoryConfig.implementation != null;
+
+        if (configuredViaCredentials && configuredViaCredentialsFactory) {
+            throw new IllegalStateError('Ambiguous Credentials config. ' +
+                'Set only one of Credentials or ICredentialsFactory');
+        }
+    }
+
+    private getCredentialsFromFactory(config: ClientConfig): ICredentialsFactory {
+        const credentialsFactoryConfig = config.securityConfig.credentialsFactoryConfig;
+        const factory = credentialsFactoryConfig.implementation;
+        if (factory == null) {
+            return null;
+        }
+
+        factory.configure(config.groupConfig, credentialsFactoryConfig.properties);
+        return factory;
     }
 }
