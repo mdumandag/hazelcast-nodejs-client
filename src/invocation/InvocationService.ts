@@ -32,6 +32,8 @@ import {DeferredPromise} from '../Util';
 import {ILogger} from '../logging/ILogger';
 import Address = require('../Address');
 import ClientMessage = require('../ClientMessage');
+import {ListenerMessageCodec} from '../ListenerMessageCodec';
+import {ClientLocalBackupListenerCodec} from '../codec/ClientLocalBackupListenerCodec';
 
 const EXCEPTION_MESSAGE_TYPE = 109;
 const MAX_FAST_INVOCATION_COUNT = 5;
@@ -76,6 +78,23 @@ export class Invocation {
      */
     handler: (...args: any[]) => any;
 
+    /**
+     * Contains the pending response from the primary. It is pending because it could be that backups need to complete.
+     */
+    pendingResponseMessage: ClientMessage = null;
+    /**
+     * Number of expected backups. It is set correctly as soon as the pending response is set.
+     */
+    backupsAcksExpected: number = -1;
+    /**
+     * The time in millis when the response of the primary has been received.
+     */
+    pendingResponseReceivedMillis: number = -1;
+    /**
+     * Number of backups acks received.
+     */
+    backupsAcksReceived: number = 0;
+
     constructor(client: HazelcastClient, request: ClientMessage) {
         this.client = client;
         this.invocationService = client.getInvocationService();
@@ -97,12 +116,58 @@ export class Invocation {
     isAllowedToRetryOnSelection(err: Error): boolean {
         return (this.connection == null && this.address == null) || !(err instanceof IOError);
     }
+
+    notify(clientMessage: ClientMessage): void {
+        assert(clientMessage != null, 'response can\'t be null');
+        const expectedBackups = clientMessage.getNumberOfBackupAcks();
+        if (expectedBackups > this.backupsAcksReceived) {
+            this.pendingResponseReceivedMillis = Date.now();
+            this.backupsAcksExpected = expectedBackups;
+            this.pendingResponseMessage = clientMessage;
+            if (this.backupsAcksReceived !== expectedBackups) {
+                return;
+            }
+        }
+        this.complete(clientMessage);
+    }
+
+    notifyBackup(): void {
+        const newBackupAcksCompleted = ++this.backupsAcksReceived;
+        const pendingResponse = this.pendingResponseMessage;
+        if (pendingResponse === null) {
+            return;
+        }
+        const backupAcksExpected = this.backupsAcksExpected;
+        if (backupAcksExpected < newBackupAcksCompleted) {
+            return;
+        }
+        if (backupAcksExpected !== newBackupAcksCompleted) {
+            return;
+        }
+        this.complete(pendingResponse);
+    }
+
+    complete(clientMessage: ClientMessage): void {
+        this.deferred.resolve(clientMessage);
+        this.invocationService.deRegisterInvocation(this.request.getCorrelationId().toNumber());
+    }
 }
 
 /**
  * Sends requests to appropriate nodes. Resolves waiting promises with responses.
  */
 export class InvocationService {
+    static backupListenerCodec: ListenerMessageCodec = {
+        encodeAddRequest(localOnly: boolean): ClientMessage {
+            return ClientLocalBackupListenerCodec.encodeRequest();
+        },
+        decodeAddResponse(msg: ClientMessage): string {
+            return ClientLocalBackupListenerCodec.decodeResponse(msg).response;
+        },
+        encodeRemoveRequest(listenerId: string): ClientMessage {
+            return null;
+        },
+    };
     doInvoke: (invocation: Invocation) => void;
     private correlationCounter = 1;
     private eventHandlers: { [id: number]: Invocation } = {};
@@ -126,6 +191,23 @@ export class InvocationService {
         this.invocationRetryPauseMillis = this.client.getConfig().properties[PROPERTY_INVOCATION_RETRY_PAUSE_MILLIS] as number;
         this.invocationTimeoutMillis = this.client.getConfig().properties[PROPERTY_INVOCATION_TIMEOUT_MILLIS] as number;
         this.isShutdown = false;
+    }
+
+    addBackupListener(): Promise<string> {
+        const listenerService = this.client.getListenerService();
+        return listenerService.registerListener(InvocationService.backupListenerCodec, this.backupEventHandler.bind(this));
+    }
+
+    backupEventHandler(clientMessage: ClientMessage): void {
+        ClientLocalBackupListenerCodec.handle(clientMessage, (correlationId: Long) => {
+            const invocation = this.pending[correlationId.toNumber()];
+            if (invocation === undefined) {
+                this.logger.trace('InvocationService', 'Invocation not found for backup event, ' +
+                    'invocation id ' + correlationId);
+                return;
+            }
+            invocation.notifyBackup();
+        });
     }
 
     shutdown(): void {
@@ -209,16 +291,9 @@ export class InvocationService {
         }
     }
 
-    /**
-     * Extract codec specific properties in a protocol message and resolves waiting promise.
-     * @param buffer
-     */
-    processResponse(buffer: Buffer): void {
-        const clientMessage = new ClientMessage(buffer);
+    handleResponse(clientMessage: ClientMessage): void {
         const correlationId = clientMessage.getCorrelationId().toNumber();
-        const messageType = clientMessage.getMessageType();
-
-        if (clientMessage.hasFlags(BitsUtil.LISTENER_FLAG)) {
+        if (clientMessage.isFlagSet(BitsUtil.BACKUP_EVENT_FLAG)) {
             setImmediate(() => {
                 if (this.eventHandlers[correlationId] !== undefined) {
                     this.eventHandlers[correlationId].handler(clientMessage);
@@ -226,16 +301,38 @@ export class InvocationService {
             });
             return;
         }
-
+        const messageType = clientMessage.getMessageType();
         const pendingInvocation = this.pending[correlationId];
-        const deferred = pendingInvocation.deferred;
         if (messageType === EXCEPTION_MESSAGE_TYPE) {
             const remoteError = this.client.getErrorFactory().createErrorFromClientMessage(clientMessage);
             this.notifyError(pendingInvocation, remoteError);
         } else {
-            delete this.pending[correlationId];
-            deferred.resolve(clientMessage);
+            pendingInvocation.notify(clientMessage);
         }
+    }
+
+    /**
+     * Extract codec specific properties in a protocol message and resolves waiting promise.
+     * @param buffer
+     */
+    processResponse(buffer: Buffer): void {
+        const clientMessage = new ClientMessage(buffer);
+        const correlationId = clientMessage.getCorrelationId().toNumber();
+        if (clientMessage.isFlagSet(BitsUtil.BACKUP_EVENT_FLAG)) {
+            this.handleResponse(clientMessage);
+        } else if (clientMessage.isFlagSet(BitsUtil.LISTENER_FLAG)) {
+            setImmediate(() => {
+                if (this.eventHandlers[correlationId] !== undefined) {
+                    this.eventHandlers[correlationId].handler(clientMessage);
+                }
+            });
+        } else {
+            this.handleResponse(clientMessage);
+        }
+    }
+
+    deRegisterInvocation(correlationId: number): void {
+        delete this.pending[correlationId];
     }
 
     private invokeSmart(invocation: Invocation): void {
@@ -300,6 +397,7 @@ export class InvocationService {
         if (this.isShutdown) {
             return Promise.reject(new ClientNotActiveError('Client is shutdown.'));
         }
+        invocation.request.addFlag(BitsUtil.BACKUP_AWARE_FLAG);
         this.registerInvocation(invocation);
         return this.write(invocation, connection);
     }

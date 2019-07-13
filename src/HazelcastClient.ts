@@ -389,6 +389,10 @@ export default class HazelcastClient {
 
     private init(): Promise<HazelcastClient> {
         return this.clusterService.start().then(() => {
+            if (this.config.networkConfig.smartRouting) {
+                return this.invocationService.addBackupListener();
+            }
+        }).then(() => {
             return this.partitionService.initialize();
         }).then(() => {
             return this.heartbeat.start();

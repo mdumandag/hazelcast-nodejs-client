@@ -30,8 +30,8 @@
  +---------------------------------------------------------------+
  |                        PartitionId                            |
  +-----------------------------+---------------------------------+
- |        Data Offset          |                                 |
- +-----------------------------+                                 |
+ |        Data Offset          |         Number of acks          |
+ +-----------------------------+---------------------------------+
  |                      Message Payload Data                    ...
  |                                                              ...
  */
@@ -61,6 +61,7 @@ class ClientMessage {
         message.setFrameLength(totalSize);
         message.setFlags(0xc0);
         message.setPartitionId(-1);
+        message.setNumberOfBackupAcks(0);
         return message;
     }
 
@@ -105,8 +106,9 @@ class ClientMessage {
         this.buffer.writeUInt8(value, BitsUtil.FLAGS_FIELD_OFFSET);
     }
 
-    hasFlags(flags: number): number {
-        return this.getFlags() & flags;
+    isFlagSet(flag: number): boolean {
+        const i = this.getFlags() & flag;
+        return i === flag;
     }
 
     getFrameLength(): number {
@@ -127,6 +129,14 @@ class ClientMessage {
 
     setRetryable(value: boolean): void {
         this.isRetryable = value;
+    }
+
+    getNumberOfBackupAcks(): number {
+        return this.buffer.readUInt16LE(BitsUtil.BACKUP_ACKS_FIELD_OFFSET);
+    }
+
+    setNumberOfBackupAcks(value: number): void {
+        this.buffer.writeUInt16LE(value, BitsUtil.BACKUP_ACKS_FIELD_OFFSET);
     }
 
     appendByte(value: number): void {
