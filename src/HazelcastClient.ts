@@ -394,6 +394,7 @@ export default class HazelcastClient {
         this.connectionManager.shutdown();
         this.listenerService.shutdown();
         this.invocationService.shutdown();
+        this.credentialsFactory.destroy();
         this.lifecycleService.emitLifecycleEvent(LifecycleEvent.shutdown);
     }
 
@@ -458,19 +459,20 @@ export default class HazelcastClient {
     }
 
     private initCredentialsFactory(config: ClientConfig): ICredentialsFactory {
-        const securityConfig = config.securityConfig;
-        this.validateSecurityConfig(securityConfig);
+        this.validateSecurityConfig(config);
 
         const factory = this.getCredentialsFromFactory(config);
-        if (factory == null) {
-            return new DefaultCredentialsFactory(securityConfig, config.groupConfig);
+        if (factory === null) {
+            return new DefaultCredentialsFactory(config.securityConfig, config.groupConfig);
         }
         return factory;
     }
 
-    private validateSecurityConfig(securityConfig: SecurityConfig): void {
-        const configuredViaCredentials = securityConfig.credentials != null;
-        const configuredViaCredentialsFactory = securityConfig.credentialsFactoryConfig.implementation != null;
+    private validateSecurityConfig(config: ClientConfig): void {
+        const securityConfig = config.securityConfig;
+
+        const configuredViaCredentials = securityConfig.credentials !== null;
+        const configuredViaCredentialsFactory = securityConfig.credentialsFactoryConfig.implementation !== null;
 
         if (configuredViaCredentials && configuredViaCredentialsFactory) {
             throw new IllegalStateError('Ambiguous Credentials config. ' +
@@ -481,7 +483,7 @@ export default class HazelcastClient {
     private getCredentialsFromFactory(config: ClientConfig): ICredentialsFactory {
         const credentialsFactoryConfig = config.securityConfig.credentialsFactoryConfig;
         const factory = credentialsFactoryConfig.implementation;
-        if (factory == null) {
+        if (factory === null) {
             return null;
         }
 

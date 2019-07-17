@@ -15,16 +15,17 @@
  */
 
 import {CredentialsFactoryConfig} from './CredentialsFactoryConfig';
+import {Credentials} from '../security/Credentials';
 
 /**
  * Contains the security configuration for the client.
  */
 export class SecurityConfig {
-
+    //TODO Update README and code samples with SecurityConfig
     /**
      * Credentials object that will be used when the client is authenticating.
      */
-    credentials: any = null;
+    credentials: Credentials = null;
 
     /**
      * {@link CredentialsFactoryConfig} to allows user to pass custom properties 

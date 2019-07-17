@@ -212,7 +212,7 @@ export class Statistics {
         this.addStat(stats, 'clientName', this.client.getName());
 
         const credentials = this.client.getConnectionManager().getLastCredentials();
-        if (credentials != null) {
+        if (credentials !== null) {
             this.addStat(stats, 'credentials.principal', credentials.getPrincipal());
         }
 

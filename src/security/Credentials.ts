@@ -22,20 +22,6 @@
  */
 export interface Credentials {
     /**
-     * Returns IP address of endpoint.
-     *
-     * @return IP address of endpoint
-     */
-    getEndpoint(): string;
-
-    /**
-     * Sets IP address of endpoint.
-     *
-     * @param endpoint IP address of endpoint
-     */
-    setEndpoint(endpoint: string): void;
-
-    /**
      * Returns principal of endpoint.
      *
      * @return endpoint principal

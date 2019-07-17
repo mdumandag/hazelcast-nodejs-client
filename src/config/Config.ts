@@ -65,7 +65,6 @@ export class ClientConfig {
     groupConfig: GroupConfig = new GroupConfig();
     networkConfig: ClientNetworkConfig = new ClientNetworkConfig();
     customLogger: ILogger;
-    customCredentials: Credentials = null;
     listeners: ListenerConfig = new ListenerConfig();
     listenerConfigs: ImportConfig[] = [];
     serializationConfig: SerializationConfig = new SerializationConfig();

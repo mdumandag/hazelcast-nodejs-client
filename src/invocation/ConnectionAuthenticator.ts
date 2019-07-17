@@ -90,8 +90,7 @@ export class ConnectionAuthenticator {
         const uuid: string = this.clusterService.uuid;
         const ownerUuid: string = this.clusterService.ownerUuid;
 
-        const customCredentials = this.client.getConfig().customCredentials;
-        const credentials = customCredentials || this.client.getCredentialsFactory().newCredentials();
+        const credentials = this.client.getCredentialsFactory().newCredentials();
         this.connectionManager.setLastCredentials(credentials);
 
         let clientMessage: ClientMessage;

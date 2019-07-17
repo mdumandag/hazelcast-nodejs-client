@@ -27,9 +27,9 @@ export interface ICredentialsFactory {
      * Configures {@link ICredentialsFactory}.
      *
      * @param groupConfig Hazelcast {@link GroupConfig}
-     * @param properties properties that will be used to pass custom configurations by user
+     * @param properties that will be used to pass custom configurations by user
      */
-    configure(groupConfig: GroupConfig, properties: Object): void;
+    configure(groupConfig: GroupConfig, properties: object): void;
 
     /**
      * Creates new {@link Credentials} object.

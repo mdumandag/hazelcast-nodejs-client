@@ -28,8 +28,8 @@ export class CredentialsFactoryConfig {
     implementation: ICredentialsFactory = null;
 
     /**
-     *  Key and values pairs to passed into the {@link ICredentialsFactory#configure}
-     *  method as a custom configuration.
+     *  Properties to be passed into the {@link ICredentialsFactory#configure}
+     *  method as a custom configuration option.
      */
-    properties: Object = null;
+    properties: object = null;
 }

@@ -19,7 +19,6 @@ import {Credentials} from './Credentials';
 export class UsernamePasswordCredentials implements Credentials {
     private readonly username: string;
     private readonly password: string;
-    private endpoint: string;
 
     constructor(username: string, password: string) {
         this.username = username;
@@ -27,22 +26,14 @@ export class UsernamePasswordCredentials implements Credentials {
     }
 
     getUsername(): string {
-        return this.getPrincipal();
+        return this.username;
     }
 
     getPassword(): string {
         return this.password;
     }
 
-    getEndpoint(): string {
-        return this.endpoint;
-    }
-
     getPrincipal(): string {
         return this.username;
-    }
-
-    setEndpoint(endpoint: string): void {
-        this.endpoint = endpoint;
     }
 }

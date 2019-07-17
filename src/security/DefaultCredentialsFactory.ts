@@ -31,7 +31,7 @@ export class DefaultCredentialsFactory implements ICredentialsFactory {
         this.credentials = this.initCredentials(securityConfig, groupConfig);
     }
 
-    configure(groupConfig: GroupConfig, properties: Object): void {
+    configure(groupConfig: GroupConfig, properties: object): void {
     }
 
     destroy(): void {
@@ -43,7 +43,7 @@ export class DefaultCredentialsFactory implements ICredentialsFactory {
 
     private initCredentials(securityConfig: SecurityConfig, groupConfig: GroupConfig): Credentials {
         let credentials = securityConfig.credentials;
-        if (credentials == null) {
+        if (credentials === null) {
             credentials = new UsernamePasswordCredentials(groupConfig.name, groupConfig.password);
         }
         return credentials;
