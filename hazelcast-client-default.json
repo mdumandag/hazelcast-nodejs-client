@@ -24,7 +24,9 @@
         "connectionTimeout": 5000,
         "connectionAttemptPeriod": 3000,
         "connectionAttemptLimit": 2,
-        "ssl": null,
+        "ssl": {
+            "enabled": false,
+        },
         "hazelcastCloud": {
             "discoveryToken": null,
             "enabled": false
@@ -45,5 +47,6 @@
     "nearCaches": [],
     "reliableTopics": [],
     "flakeIdGeneratorConfigs": [],
+    "security": {},
     "import": []
 }

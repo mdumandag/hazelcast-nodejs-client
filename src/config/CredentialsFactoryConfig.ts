@@ -15,6 +15,7 @@
  */
 
 import {ICredentialsFactory} from '../security/ICredentialsFactory';
+import {Properties} from './Properties';
 
 /**
  * Contains the configuration for Credentials Factory.
@@ -31,5 +32,5 @@ export class CredentialsFactoryConfig {
      *  Properties to be passed into the {@link ICredentialsFactory#configure}
      *  method as a custom configuration option.
      */
-    properties: object = null;
+    properties: Properties = null;
 }

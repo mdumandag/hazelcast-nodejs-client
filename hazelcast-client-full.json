@@ -131,6 +131,19 @@
             "prefetchValidityMillis": 500000
         }
     ],
+    "security": {
+        "credentials": {
+            "path": "path/to/credentials",
+            "exportedName": "exportedName"
+        },
+        "credentialsFactory": {
+            "path": "path/to/factory",
+            "exportedName": "exportedName",
+            "properties": {
+                "userDefinedProperty1": "userDefinedValue"
+            }
+        }
+    },
     "import": [
         "hazelcast-client-near-cache.json"
     ]

@@ -16,6 +16,7 @@
 
 import {GroupConfig} from '../config/GroupConfig';
 import {Credentials} from './Credentials';
+import {Properties} from '../config/Properties';
 
 /**
  * ICredentialsFactory is used to create {@link Credentials} objects to be used
@@ -29,7 +30,7 @@ export interface ICredentialsFactory {
      * @param groupConfig Hazelcast {@link GroupConfig}
      * @param properties that will be used to pass custom configurations by user
      */
-    configure(groupConfig: GroupConfig, properties: object): void;
+    configure(groupConfig: GroupConfig, properties: Properties): void;
 
     /**
      * Creates new {@link Credentials} object.

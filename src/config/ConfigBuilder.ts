@@ -16,9 +16,9 @@
 
 import * as Promise from 'bluebird';
 import {BasicSSLOptionsFactory} from '../connection/BasicSSLOptionsFactory';
-import {HazelcastError} from '../HazelcastError';
+import {HazelcastError, IllegalStateError} from '../HazelcastError';
 import {TopicOverloadPolicy} from '../proxy/topic/TopicOverloadPolicy';
-import {mergeJson, tryGetArray, tryGetBoolean, tryGetEnum, tryGetNumber, tryGetString} from '../Util';
+import {loadNameFromPath, mergeJson, tryGetArray, tryGetBoolean, tryGetEnum, tryGetNumber, tryGetString} from '../Util';
 import {ClientConfig} from './Config';
 import {EvictionPolicy} from './EvictionPolicy';
 import {FlakeIdGeneratorConfig} from './FlakeIdGeneratorConfig';
@@ -84,6 +84,8 @@ export class ConfigBuilder {
                 this.handleReliableTopics(jsonObject[key]);
             } else if (key === 'flakeIdGeneratorConfigs') {
                 this.handleFlakeIds(jsonObject[key]);
+            } else if (key === 'security') {
+                this.handleSecurity(jsonObject[key]);
             }
         }
     }
@@ -299,4 +301,25 @@ export class ConfigBuilder {
         }
     }
 
+    private handleSecurity(jsonObject: any): void {
+        const credentials = jsonObject.credentials;
+        const credentialsFactory = jsonObject.credentialsFactory;
+
+        if (credentials) {
+            if (credentialsFactory) {
+                throw new IllegalStateError('Ambiguous Credentials config. ' +
+                    'Set only one of credentials or credentialsFactory');
+            }
+            const importConfig = this.parseImportConfig(credentials);
+            const credentialsConstructor = loadNameFromPath(importConfig.path, importConfig.exportedName);
+            this.clientConfig.securityConfig.credentials = new credentialsConstructor();
+        } else if (credentialsFactory) {
+            const importConfig = this.parseImportConfig(credentialsFactory);
+            const factoryConstructor = loadNameFromPath(importConfig.path, importConfig.exportedName);
+            this.clientConfig.securityConfig
+                .credentialsFactoryConfig.implementation = new factoryConstructor();
+            this.clientConfig.securityConfig
+                .credentialsFactoryConfig.properties = this.parseProperties(credentialsFactory.properties)
+        }
+    }
 }

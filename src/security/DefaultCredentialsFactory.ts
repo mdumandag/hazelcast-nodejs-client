@@ -19,6 +19,7 @@ import {GroupConfig} from '../config/GroupConfig';
 import {Credentials} from './Credentials';
 import {SecurityConfig} from '../config/SecurityConfig';
 import {UsernamePasswordCredentials} from './UsernamePasswordCredentials';
+import {Properties} from '../config/Properties';
 
 /**
  * This is the factory that uses Credentials instance giving by implementation
@@ -31,7 +32,7 @@ export class DefaultCredentialsFactory implements ICredentialsFactory {
         this.credentials = this.initCredentials(securityConfig, groupConfig);
     }
 
-    configure(groupConfig: GroupConfig, properties: object): void {
+    configure(groupConfig: GroupConfig, properties: Properties): void {
     }
 
     destroy(): void {
