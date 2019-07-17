@@ -1660,7 +1660,7 @@ var UsernamePasswordCredentialsFactory = require('./user_pass_cred_factory').Use
 var config = new ClientConfig();
 config.serializationConfig.portableVersion = 1;
 config.serializationConfig.portableFactories[-1] = new UsernamePasswordCredentialsFactory();
-config.customCredentials = new UsernamePasswordCredentials('admin', 'password', '127.0.0.1');
+config.securityConfig.credentials = new UsernamePasswordCredentials('admin', 'password', '127.0.0.1');
 
 Client.newHazelcastClient(config).then(function (client) {
     var map;

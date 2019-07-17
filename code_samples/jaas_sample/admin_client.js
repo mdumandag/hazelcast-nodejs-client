@@ -23,7 +23,7 @@ var UsernamePasswordCredentialsFactory = require('./user_pass_cred_factory').Use
 var adminClientConfig = new Config();
 
 adminClientConfig.serializationConfig.portableFactories[1] = new UsernamePasswordCredentialsFactory();
-adminClientConfig.customCredentials = new UsernamePasswordCredentials('admin', 'password1', '127.0.0.1');
+adminClientConfig.securityConfig.credentials = new UsernamePasswordCredentials('admin', 'password1', '127.0.0.1');
 
 Client.newHazelcastClient(adminClientConfig).then(function (adminClient) {
     console.log('Admin client connected');

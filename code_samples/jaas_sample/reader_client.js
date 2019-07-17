@@ -23,7 +23,7 @@ var UsernamePasswordCredentialsFactory = require('./user_pass_cred_factory').Use
 var readerClientConfig = new Config();
 
 readerClientConfig.serializationConfig.portableFactories[1] = new UsernamePasswordCredentialsFactory();
-readerClientConfig.customCredentials = new UsernamePasswordCredentials('reader', 'password2', '127.0.0.1');
+readerClientConfig.securityConfig.credentials = new UsernamePasswordCredentials('reader', 'password2', '127.0.0.1');
 
 Client.newHazelcastClient(readerClientConfig).then(function (readerClient) {
     console.log('Reader client connected');

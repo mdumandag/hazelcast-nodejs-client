@@ -459,18 +459,17 @@ export default class HazelcastClient {
     }
 
     private initCredentialsFactory(config: ClientConfig): ICredentialsFactory {
-        this.validateSecurityConfig(config);
+        const securityConfig = config.securityConfig;
+        this.validateSecurityConfig(securityConfig);
 
         const factory = this.getCredentialsFromFactory(config);
         if (factory === null) {
-            return new DefaultCredentialsFactory(config.securityConfig, config.groupConfig);
+            return new DefaultCredentialsFactory(securityConfig, config.groupConfig);
         }
         return factory;
     }
 
-    private validateSecurityConfig(config: ClientConfig): void {
-        const securityConfig = config.securityConfig;
-
+    private validateSecurityConfig(securityConfig: SecurityConfig): void {
         const configuredViaCredentials = securityConfig.credentials !== null;
         const configuredViaCredentialsFactory = securityConfig.credentialsFactoryConfig.implementation !== null;
 
