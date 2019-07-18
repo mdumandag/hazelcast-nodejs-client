@@ -32,5 +32,5 @@ export class CredentialsFactoryConfig {
      *  Properties to be passed into the {@link ICredentialsFactory#configure}
      *  method as a custom configuration option.
      */
-    properties: Properties = null;
+    properties: Properties = {};
 }

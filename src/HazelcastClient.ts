@@ -125,12 +125,10 @@ export default class HazelcastClient {
         if (config == null) {
             const configBuilder = new ConfigBuilder();
             return configBuilder.loadConfig().then(() => {
-                const client = new HazelcastClient(configBuilder.build());
-                return client.init();
+                return HazelcastClient.newHazelcastClientInternal(configBuilder.build());
             });
         } else {
-            const client = new HazelcastClient(config);
-            return client.init();
+            return HazelcastClient.newHazelcastClientInternal(config);
         }
     }
 
@@ -488,5 +486,14 @@ export default class HazelcastClient {
 
         factory.configure(config.groupConfig, credentialsFactoryConfig.properties);
         return factory;
+    }
+
+    private static newHazelcastClientInternal(config: ClientConfig): Promise<HazelcastClient> {
+        try {
+            const client = new HazelcastClient(config);
+            return client.init();
+        } catch (e) {
+            return Promise.reject(e);
+        }
     }
 }
