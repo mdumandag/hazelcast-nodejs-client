@@ -34,7 +34,6 @@ import {ILogger} from '../logging/ILogger';
 import {JsonStringDeserializationPolicy} from './JsonStringDeserializationPolicy';
 import {StringSerializationPolicy} from './StringSerializationPolicy';
 import {SecurityConfig} from './SecurityConfig';
-import {Credentials} from '../security/Credentials';
 
 /**
  * Top level configuration object of Hazelcast client. Other configurations items are properties of this object.
