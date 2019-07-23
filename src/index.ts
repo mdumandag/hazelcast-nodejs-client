@@ -39,6 +39,7 @@ import {LogLevel} from './logging/LoggingService';
 import {JsonStringDeserializationPolicy} from './config/JsonStringDeserializationPolicy';
 import {HazelcastJsonValue} from './core/HazelcastJsonValue';
 import {StringSerializationPolicy} from './config/StringSerializationPolicy';
+import {FailoverConfigBuilder} from './config/FailoverConfigBuilder';
 
 export {
     HazelcastClient as Client,
@@ -69,4 +70,5 @@ export {
     JsonStringDeserializationPolicy,
     HazelcastJsonValue,
     StringSerializationPolicy,
+    FailoverConfigBuilder,
 };

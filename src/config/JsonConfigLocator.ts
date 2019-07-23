@@ -17,18 +17,23 @@
 import * as Promise from 'bluebird';
 import * as fs from 'fs';
 import * as Path from 'path';
-import {LoggingService, LogLevel} from '../logging/LoggingService';
+import {LogLevel} from '../logging/LoggingService';
 import {ConfigBuilder} from './ConfigBuilder';
 import {DeferredPromise} from '../Util';
 import {DefaultLogger} from '../logging/DefaultLogger';
 
 export class JsonConfigLocator {
-    static readonly ENV_VARIABLE_NAME = 'HAZELCAST_CLIENT_CONFIG';
-    static readonly DEFAULT_FILE_NAME = 'hazelcast-client.json';
 
+    private readonly environmentVariableName: string;
+    private readonly filePath: string;
     private buffer: Buffer;
     private configLocation: string;
     private logger = new DefaultLogger(LogLevel.INFO);
+
+    constructor(filePath: string, environmentVariableName: string) {
+        this.filePath = filePath;
+        this.environmentVariableName = environmentVariableName;
+    }
 
     load(): Promise<void> {
         return this.loadFromEnvironment().then((loaded: boolean) => {
@@ -45,12 +50,12 @@ export class JsonConfigLocator {
     }
 
     loadFromEnvironment(): Promise<boolean> {
-        const envVariableLocation = process.env[JsonConfigLocator.ENV_VARIABLE_NAME];
-        if (envVariableLocation) {
+        const envVariableLocation = process.env[this.environmentVariableName];
+        if (this.environmentVariableName && envVariableLocation) {
             const loadLocation = Path.resolve(envVariableLocation);
-            this.logger.trace('ConfigBuilder', 'Loading config from ' + envVariableLocation);
-            return this.loadPath(envVariableLocation).then((buffer: Buffer) => {
-                this.configLocation = envVariableLocation;
+            this.logger.trace('ConfigBuilder', 'Loading config from ' + loadLocation);
+            return this.loadPath(loadLocation).then((buffer: Buffer) => {
+                this.configLocation = loadLocation;
                 this.buffer = buffer;
                 return true;
             });
@@ -61,7 +66,7 @@ export class JsonConfigLocator {
 
     loadFromWorkingDirectory(): Promise<boolean> {
         const cwd = process.cwd();
-        const jsonPath = Path.resolve(cwd, JsonConfigLocator.DEFAULT_FILE_NAME);
+        const jsonPath = Path.resolve(cwd, this.filePath);
         const deferred = DeferredPromise<boolean>();
         fs.access(jsonPath, (err) => {
             if (err) {

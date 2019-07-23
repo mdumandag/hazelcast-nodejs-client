@@ -1,0 +1,7 @@
+{
+    "tryCount": 4,
+    "clients": [
+        "hazelcast-client-c1.json",
+        "hazelcast-client-c2.json"
+    ]
+}

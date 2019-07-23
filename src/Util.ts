@@ -18,7 +18,7 @@ import * as assert from 'assert';
 import * as Long from 'long';
 import * as Promise from 'bluebird';
 import * as Path from 'path';
-import {JsonConfigLocator} from './config/JsonConfigLocator';
+import {ConfigBuilder} from './config/ConfigBuilder';
 import {Comparator} from './core/Comparator';
 import {IterationType} from './core/Predicate';
 import {PagingPredicate} from './serialization/DefaultPredicates';
@@ -176,8 +176,8 @@ export function tryGetEnum<T>(enumClass: any | { [index: string]: number }, str:
 
 export function resolvePath(path: string): string {
     let basePath: string;
-    if (process.env[JsonConfigLocator.ENV_VARIABLE_NAME]) {
-        basePath = Path.dirname(process.env[JsonConfigLocator.ENV_VARIABLE_NAME]);
+    if (process.env[ConfigBuilder.ENV_VARIABLE_NAME]) {
+        basePath = Path.dirname(process.env[ConfigBuilder.ENV_VARIABLE_NAME]);
     } else {
         basePath = process.cwd();
     }

@@ -32,9 +32,21 @@ import {JsonStringDeserializationPolicy} from './JsonStringDeserializationPolicy
 import {StringSerializationPolicy} from './StringSerializationPolicy';
 
 export class ConfigBuilder {
+    static readonly ENV_VARIABLE_NAME = 'HAZELCAST_CLIENT_CONFIG';
+    static readonly DEFAULT_FILE_NAME = 'hazelcast-client.json';
+
     private clientConfig: ClientConfig = new ClientConfig();
     private loadedJson: any;
-    private configLocator: JsonConfigLocator = new JsonConfigLocator();
+    private configLocator: JsonConfigLocator;
+
+    constructor(filePath?: string) {
+        if (filePath === undefined) {
+            this.configLocator = new JsonConfigLocator(ConfigBuilder.DEFAULT_FILE_NAME,
+                ConfigBuilder.ENV_VARIABLE_NAME);
+        } else {
+            this.configLocator = new JsonConfigLocator(filePath, null);
+        }
+    }
 
     loadConfig(): Promise<void> {
         return this.configLocator.load().then(() => {
