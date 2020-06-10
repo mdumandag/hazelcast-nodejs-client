@@ -116,16 +116,11 @@ export default class HazelcastClient {
      * @returns a new client instance
      */
     public static newHazelcastClient(config?: ClientConfig): Promise<HazelcastClient> {
-        if (config == null) {
-            const configBuilder = new ConfigBuilder();
-            return configBuilder.loadConfig().then(() => {
-                const client = new HazelcastClient(configBuilder.build());
-                return client.init();
-            });
-        } else {
-            const client = new HazelcastClient(config);
+        const configBuilder = new ConfigBuilder();
+        return configBuilder.loadConfig().then(() => {
+            const client = new HazelcastClient(configBuilder.build());
             return client.init();
-        }
+        });
     }
 
     /**

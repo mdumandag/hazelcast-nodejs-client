@@ -91,6 +91,7 @@ export class ProxyManager {
     }
 
     public getOrCreateProxy(name: string, serviceName: string, createAtServer = true): Promise<DistributedObject> {
+        name = this.client.getClusterService().uuid + ":" + name;
         const fullName = serviceName + name;
         if (this.proxies[fullName]) {
             return this.proxies[fullName];
